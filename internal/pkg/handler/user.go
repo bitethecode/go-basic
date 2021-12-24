@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -54,13 +53,28 @@ func PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	errors := make(map[string]string)
 	v := validator.New()
 
 	if err = v.Struct(user); err != nil {
-		for _, err := range err.(validator.ValidationErrors) {
-			errors[strings.ToLower(err.Field())] = fmt.Sprintf("%s is %s %s", err.Field(), err.Tag(), err.Param())
-		}
+		errors := make(map[string][]string)
+
+		for _,err := range err.(validator.ValidationErrors){
+            name := strings.ToLower(err.Field())
+            switch err.Tag() {
+            case "required":
+                errors[name] = append(errors[name], "The "+name+" is required")
+                break
+            case "email":
+                errors[name] = append(errors[name], "The "+name+" should be a valid email")
+                break
+            case "eqfield":
+                errors[name] = append(errors[name], "The "+name+" should be equal to the "+err.Param())
+                break
+            default:
+                errors[name] = append(errors[name], "The "+name+" is invalid")
+                break
+            }
+        }
 
 		msg, err := json.Marshal(errors); if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
