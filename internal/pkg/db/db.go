@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 const (
@@ -19,6 +20,11 @@ func OpenDb() *sql.DB {
 	if err != nil {
 		panic(err)
 	}
+
+	db.SetMaxIdleConns(5)
+	db.SetMaxOpenConns(10)
+	db.SetConnMaxIdleTime(1 * time.Second)
+	db.SetConnMaxLifetime(30 * time.Second)
 
 	return db
 }
